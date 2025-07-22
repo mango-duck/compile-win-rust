@@ -39,7 +39,7 @@ jobs:
       run: cargo test --release --verbose
       
     - name: Upload Release Artifacts
-      if: matrix.target == 'x86_64-pc-windows-msvc'  # 只上传64位版本
+      if: matrix.target == 'x86_64-pc-windows-msvc'  
       uses: actions/upload-artifact@v3
       with:
         name: release-binaries
