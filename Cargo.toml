@@ -1,0 +1,12 @@
+[package]
+name = "compile-win-rust"
+version = "0.1.0"
+edition = "2024"
+authors = ["mango"]
+description = "一个简单的 Windows Rust 程序示例"
+
+[dependencies]
+chrono = "0.4"  # 用于时间格式化
+
+[dev-dependencies]
+assert_cmd = "2.0"  # 用于集成测试
