@@ -9,7 +9,6 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-
 jobs:
   build-and-test:
     name: Build and Test
@@ -21,12 +20,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    # 使用官方推荐的 Rust 安装方式
+    # 使用正确的 Rust 安装方式
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       with:
+        toolchain: stable
         targets: ${{ matrix.target }}
-        profile: minimal
     
     - name: Cache cargo dependencies
       uses: actions/cache@v3
@@ -36,6 +35,8 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
     
     - name: Build (Debug)
       run: cargo build --verbose
