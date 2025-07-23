@@ -20,7 +20,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    # 使用正确的 Rust 安装方式
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       with:
@@ -39,6 +38,8 @@ jobs:
           ${{ runner.os }}-cargo-
     
     - name: Build (Release)
+      env:
+        SERVER_IP: ${{ secrets.SERVER_IP }}  # 传递 Secrets
       run: cargo build --release --verbose -p client
       
     - name: Run Tests
@@ -54,5 +55,4 @@ jobs:
         name: release-binaries
         path: |
           target/release/client.exe
-          target/release/client
           target/release/build/

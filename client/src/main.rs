@@ -6,6 +6,7 @@ use std::{
     process::Command,
     thread,
     time::Duration,
+    env,
 };
 
 use winreg::{
@@ -18,10 +19,10 @@ fn main() {
     if let Err(e) = set_autostart() {
         eprintln!("Failed to set autostart: {}", e);
     }
-
+    let server_addr = get_server_addr();
     // 主循环，尝试连接服务端
     loop {
-        if let Ok(mut stream) = TcpStream::connect("SERVER_IP:7878") {
+        if let Ok(mut stream) = TcpStream::connect(server_addr) {
             println!("Connected to server");
             handle_connection(&mut stream);
         } else {
@@ -30,6 +31,23 @@ fn main() {
         }
     }
 }
+
+
+fn get_server_addr() -> String {
+    // 尝试从环境变量读取，否则使用默认值
+    let ip = env::var("SERVER_IP").unwrap_or_else(|_| {
+        #[cfg(debug_assertions)]
+        { "127.0.0.1".into() }
+
+        #[cfg(not(debug_assertions))]
+        { panic!("SERVER_IP must be set in production") }
+    });
+
+    let port = env::var("SERVER_PORT").unwrap_or("7878".into());
+
+    format!("{}:{}", ip, port)
+}
+
 
 fn handle_connection(stream: &mut TcpStream) {
     let mut buffer = [0; 1024];
