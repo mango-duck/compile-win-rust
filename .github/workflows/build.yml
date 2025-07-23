@@ -38,9 +38,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cargo-
     
-    - name: Build (Debug)
-      run: cargo build --verbose -p client
-    
     - name: Build (Release)
       run: cargo build --release --verbose -p client
       
@@ -56,5 +53,6 @@ jobs:
       with:
         name: release-binaries
         path: |
-          target/release/client.exe  # 假设 client 编译出的二进制是 client.exe
+          target/release/client.exe
+          target/release/client
           target/release/build/
