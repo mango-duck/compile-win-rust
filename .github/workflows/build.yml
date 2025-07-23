@@ -9,22 +9,33 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+
 jobs:
   build-and-test:
     name: Build and Test
     runs-on: windows-latest
     strategy:
       matrix:
-        target: [x86_64-pc-windows-msvc]
+        target: [x86_64-pc-windows-msvc, i686-pc-windows-msvc]
     
     steps:
     - uses: actions/checkout@v4
     
+    # 使用官方推荐的 Rust 安装方式
     - name: Install Rust
-      uses: actions-rust-lang/setup-rust@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        target: ${{ matrix.target }}
-        toolchain: stable
+        targets: ${{ matrix.target }}
+        profile: minimal
+    
+    - name: Cache cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     
     - name: Build (Debug)
       run: cargo build --verbose
@@ -39,8 +50,8 @@ jobs:
       run: cargo test --release --verbose
       
     - name: Upload Release Artifacts
-      if: matrix.target == 'x86_64-pc-windows-msvc'  
-      uses: actions/upload-artifact@v3
+      if: matrix.target == 'x86_64-pc-windows-msvc'
+      uses: actions/upload-artifact@v4
       with:
         name: release-binaries
         path: |
