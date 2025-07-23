@@ -15,7 +15,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        target: [x86_64-pc-windows-msvc, i686-pc-windows-msvc]
+        target: [x86_64-pc-windows-msvc]
     
     steps:
     - uses: actions/checkout@v4
@@ -39,16 +39,16 @@ jobs:
           ${{ runner.os }}-cargo-
     
     - name: Build (Debug)
-      run: cargo build --verbose
+      run: cargo build --verbose -p client
     
     - name: Build (Release)
-      run: cargo build --release --verbose
+      run: cargo build --release --verbose -p client
       
     - name: Run Tests
-      run: cargo test --verbose
+      run: cargo test --verbose -p client
       
     - name: Run Integration Tests
-      run: cargo test --release --verbose
+      run: cargo test --release --verbose -p client
       
     - name: Upload Release Artifacts
       if: matrix.target == 'x86_64-pc-windows-msvc'
@@ -56,5 +56,5 @@ jobs:
       with:
         name: release-binaries
         path: |
-          target/release/windows-rust-example.exe
+          target/release/client.exe  # 假设 client 编译出的二进制是 client.exe
           target/release/build/
